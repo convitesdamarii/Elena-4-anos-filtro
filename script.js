@@ -63,24 +63,44 @@ document.getElementById('btn-foto').addEventListener('click', () => {
     link.click();
 });
 
-// FUNÇÃO: GRAVAR VÍDEO
+// // FUNÇÃO: GRAVAR VÍDEO CORRIGIDA
 document.getElementById('btn-video').addEventListener('click', () => {
     if (mediaRecorder && mediaRecorder.state === "recording") {
         mediaRecorder.stop();
         document.getElementById('icon-video').style.filter = "none";
     } else {
         recordedChunks = [];
+        
+        // Garante que o canvas está no tamanho certo antes de capturar
+        canvas.width = 1080;
+        canvas.height = 1920;
+        
+        // Captura o stream do canvas que já mescla vídeo + moldura
         const stream = canvas.captureStream(30); 
-        mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
-        mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) recordedChunks.push(e.data); };
+        
+        // Tenta usar formatos diferentes para maior compatibilidade
+        let options = { mimeType: 'video/webm;codecs=vp9' };
+        if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+            options = { mimeType: 'video/webm' };
+        }
+
+        mediaRecorder = new MediaRecorder(stream, options);
+        
+        mediaRecorder.ondataavailable = (e) => {
+            if (e.data.size > 0) recordedChunks.push(e.data);
+        };
+
         mediaRecorder.onstop = () => {
             const blob = new Blob(recordedChunks, { type: 'video/webm' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'video-maya.webm';
+            a.download = 'video-maya.webm'; // Ele baixa como webm
             a.click();
+            
+            // Dica: Para ver o vídeo no celular, use o app "Google Fotos" ou um player como "VLC"
         };
+
         mediaRecorder.start();
         document.getElementById('icon-video').style.filter = "invert(20%) sepia(100%) saturate(10000%) hue-rotate(0deg)";
     }
