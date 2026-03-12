@@ -27,13 +27,36 @@ document.getElementById('btn-inverter').addEventListener('click', () => {
     startCamera();
 });
 
-// FUNÇÃO: TIRAR FOTO
+// // FUNÇÃO: TIRAR FOTO CORRIGIDA
 document.getElementById('btn-foto').addEventListener('click', () => {
     const ctx = canvas.getContext('2d');
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    
+    // Define o tamanho do canvas exatamente igual ao tamanho da moldura (1080x1920)
+    canvas.width = 1080;
+    canvas.height = 1920;
+
+    // Desenha o vídeo ocupando todo o fundo, recortando as sobras para não achatar
+    const videoRatio = video.videoWidth / video.videoHeight;
+    const canvasRatio = canvas.width / canvas.height;
+    let sw, sh, sx, sy;
+
+    if (videoRatio > canvasRatio) {
+        sh = video.videoHeight;
+        sw = video.videoHeight * canvasRatio;
+        sx = (video.videoWidth - sw) / 2;
+        sy = 0;
+    } else {
+        sw = video.videoWidth;
+        sh = video.videoWidth / canvasRatio;
+        sx = 0;
+        sy = (video.videoHeight - sh) / 2;
+    }
+
+    ctx.drawImage(video, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
+    
+    // Desenha a moldura por cima sem distorcer
     ctx.drawImage(moldura, 0, 0, canvas.width, canvas.height);
+
     const link = document.createElement('a');
     link.download = 'foto-maya.png';
     link.href = canvas.toDataURL('image/png');
